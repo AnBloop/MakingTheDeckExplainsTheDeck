@@ -82,7 +82,7 @@ class _CardSearchWidgetState extends State<CardSearchWidget> {
 
               Positioned(
                 bottom: 0,
-                left: 20,
+                left: 0,
                   child: Opacity(
                     opacity: colorFilter['C']! ? 1 : 0.5,
                     child: IconButton(
@@ -104,7 +104,7 @@ class _CardSearchWidgetState extends State<CardSearchWidget> {
 
               Positioned(
                 bottom: 0,
-                left: 50,
+                left: 25,
                 child: Opacity(
                     opacity: colorFilter['W']! ? 1 : 0.5,
                     child: IconButton(
@@ -126,7 +126,7 @@ class _CardSearchWidgetState extends State<CardSearchWidget> {
 
               Positioned(
                 bottom: 0,
-                left: 80,
+                left: 50,
                 child: Opacity(
                     opacity: colorFilter['U']! ? 1 : 0.5,
                     child: IconButton(
@@ -148,7 +148,7 @@ class _CardSearchWidgetState extends State<CardSearchWidget> {
 
               Positioned(
                 bottom: 0,
-                left: 110,
+                left: 75,
                 child: Opacity(
                     opacity: colorFilter['B']! ? 1 : 0.5,
                     child: IconButton(
@@ -170,7 +170,7 @@ class _CardSearchWidgetState extends State<CardSearchWidget> {
 
               Positioned(
                 bottom: 0,
-                left: 140,
+                left: 100,
                 child: Opacity(
                     opacity: colorFilter['R']! ? 1 : 0.5,
                     child: IconButton(
@@ -192,7 +192,7 @@ class _CardSearchWidgetState extends State<CardSearchWidget> {
 
               Positioned(
                 bottom: 0,
-                left: 170,
+                left: 125,
                 child: Opacity(
                     opacity: colorFilter['G']! ? 1 : 0.5,
                     child: IconButton(
@@ -244,17 +244,6 @@ class _CardSearchWidgetState extends State<CardSearchWidget> {
                   });
                 }
               ),
-              ),
-
-              Positioned(
-                bottom: 5  ,
-                right: 230,
-                child: Text(
-                  "Sort by:",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold)
-                  )
               ),
 
               Positioned(
@@ -320,9 +309,9 @@ Map<String, bool> colorFilter = {
   "G" : true
 };
 
-final int minCardsPerRow = 3;
-final int maxCardsPerRow = 9;
-int cardsPerRow = 6;
+final int minCardsPerRow = 1;
+final int maxCardsPerRow = 5;
+int cardsPerRow = 2;
 double heightToWidthRatio = 63/88;
 
 Widget buildSearchResults(Map<String, dynamic> cardData) {
@@ -349,7 +338,7 @@ Widget buildSearchResults(Map<String, dynamic> cardData) {
     return 
     Expanded(
       child: Padding(
-      padding: EdgeInsets.symmetric(horizontal: 50),
+      padding: EdgeInsets.symmetric(horizontal: 10),
       child: GridView.builder(
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: cardsPerRow,
