@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'scryfall.dart';
@@ -21,6 +23,7 @@ class _CardSearchWidgetState extends State<CardSearchWidget> {
     if (searchText.isNotEmpty) {
       try {
         cardData = await fetchCard(searchText);
+        cardData = sortCardData(currentSortString, cardData!);
         setState(() {
           activeWidget = CardSearchWidget();
         });
@@ -32,6 +35,8 @@ class _CardSearchWidgetState extends State<CardSearchWidget> {
       }
     }
   }
+
+  final double iconSize = 20;
 
   Widget build(BuildContext context) {
     return Column(
@@ -73,8 +78,142 @@ class _CardSearchWidgetState extends State<CardSearchWidget> {
                 )
               ),
 
+            //Color Sorting
 
-              
+              Positioned(
+                bottom: 0,
+                left: 20,
+                  child: Opacity(
+                    opacity: colorFilter['C']! ? 1 : 0.5,
+                    child: IconButton(
+                      icon: Image.asset(
+                        "assets/icons/mana_c.png", 
+                        height: iconSize, width: iconSize,
+                        errorBuilder: (context, error, stackTrace){
+                          return Icon(Icons.circle, color: Colors.grey);
+                      },),
+                      
+                      onPressed: () {
+                        setState((){
+                          colorFilter["C"] = !colorFilter["C"]!;
+                        });
+                      }
+                    )
+                  )
+              ),
+
+              Positioned(
+                bottom: 0,
+                left: 50,
+                child: Opacity(
+                    opacity: colorFilter['W']! ? 1 : 0.5,
+                    child: IconButton(
+                      icon: Image.asset(
+                        "assets/icons/mana_w.png", 
+                        height: iconSize, width: iconSize,
+                        errorBuilder: (context, error, stackTrace){
+                          return Icon(Icons.circle, color: Colors.yellow);
+                      },),
+                      
+                      onPressed: () {
+                        setState((){
+                          colorFilter["W"] = !colorFilter["W"]!;
+                        });
+                      }
+                    )
+                  )
+              ),
+
+              Positioned(
+                bottom: 0,
+                left: 80,
+                child: Opacity(
+                    opacity: colorFilter['U']! ? 1 : 0.5,
+                    child: IconButton(
+                      icon: Image.asset(
+                        "assets/icons/mana_u.png", 
+                        height: iconSize, width: iconSize,
+                        errorBuilder: (context, error, stackTrace){
+                          return Icon(Icons.circle, color: Colors.blue);
+                      },),
+                      
+                      onPressed: () {
+                        setState((){
+                          colorFilter["U"] = !colorFilter["U"]!;
+                        });
+                      }
+                    )
+                  )
+              ),
+
+              Positioned(
+                bottom: 0,
+                left: 110,
+                child: Opacity(
+                    opacity: colorFilter['B']! ? 1 : 0.5,
+                    child: IconButton(
+                      icon: Image.asset(
+                        "assets/icons/mana_b.png", 
+                        height: iconSize, width: iconSize,
+                        errorBuilder: (context, error, stackTrace){
+                          return Icon(Icons.circle, color: Colors.black);
+                      },),
+                      
+                      onPressed: () {
+                        setState((){
+                          colorFilter["B"] = !colorFilter["B"]!;
+                        });
+                      }
+                    )
+                  )
+              ),
+
+              Positioned(
+                bottom: 0,
+                left: 140,
+                child: Opacity(
+                    opacity: colorFilter['R']! ? 1 : 0.5,
+                    child: IconButton(
+                      icon: Image.asset(
+                        "assets/icons/mana_r.png", 
+                        height: iconSize, width: iconSize,
+                        errorBuilder: (context, error, stackTrace){
+                          return Icon(Icons.circle, color: Colors.red);
+                      },),
+                      
+                      onPressed: () {
+                        setState((){
+                          colorFilter["R"] = !colorFilter["R"]!;
+                        });
+                      }
+                    )
+                  )
+              ),
+
+              Positioned(
+                bottom: 0,
+                left: 170,
+                child: Opacity(
+                    opacity: colorFilter['G']! ? 1 : 0.5,
+                    child: IconButton(
+                      icon: Image.asset(
+                        "assets/icons/mana_g.png", 
+                        height: iconSize, width: iconSize,
+                        errorBuilder: (context, error, stackTrace){
+                          return Icon(Icons.circle, color: Colors.green);
+                      },),
+                      
+                      onPressed: () {
+                        setState((){
+                          colorFilter["G"] = !colorFilter["G"]!;
+                        });
+                      }
+                    )
+                  )
+              ),
+
+
+            
             //Options Bar
 
               Positioned(
@@ -108,10 +247,33 @@ class _CardSearchWidgetState extends State<CardSearchWidget> {
               ),
 
               Positioned(
+                bottom: 5  ,
+                right: 230,
+                child: Text(
+                  "Sort by:",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold)
+                  )
+              ),
+
+              Positioned(
+                bottom: 0,
+                right: 65,
+                child: IconButton(
+                  icon: revSort ? Icon(Icons.arrow_downward_rounded) : Icon(Icons.arrow_upward_rounded),
+                  onPressed: () {setState(() {
+                    revSort = !revSort;
+                    cardData = sortCardData(currentSortString, cardData!);
+                  });},
+                ),),
+
+              Positioned(
                 bottom: 0,
                 right: 100,
                 height: 40,
                 child: DropdownButton(
+                  value: currentSortString,
                   items: sortList.map((String value) {
                     return DropdownMenuItem<String>(
                       value: value,
@@ -120,7 +282,8 @@ class _CardSearchWidgetState extends State<CardSearchWidget> {
                   }).toList(),
                   
                   onChanged: (value) {setState(() {
-                    sortCardData(value!, cardData!);
+                    currentSortString = value!;
+                    if(cardData != null){cardData = sortCardData(value, cardData!);}
                     });
                   },
                   
@@ -148,12 +311,41 @@ class _CardSearchWidgetState extends State<CardSearchWidget> {
 
 }
 
+Map<String, bool> colorFilter = {
+  "C" : true,
+  "W" : true,
+  "U" : true,
+  "B" : true,
+  "R" : true,
+  "G" : true
+};
+
 final int minCardsPerRow = 3;
 final int maxCardsPerRow = 9;
 int cardsPerRow = 6;
 double heightToWidthRatio = 63/88;
 
 Widget buildSearchResults(Map<String, dynamic> cardData) {
+
+  List<dynamic> filteredData = List.from(cardData['data']);
+
+ for(var card in cardData['data']){
+
+  if(card['color_identity'].isEmpty && !colorFilter["C"]!){
+    filteredData.remove(card);
+    continue;
+  }
+
+  for(String color in card['color_identity']){
+
+
+    if(!colorFilter[color]!){
+      filteredData.remove(card);
+      continue;
+    }
+  }
+ }
+
     return 
     Expanded(
       child: Padding(
@@ -165,9 +357,9 @@ Widget buildSearchResults(Map<String, dynamic> cardData) {
           mainAxisSpacing: 10.0,
           childAspectRatio: heightToWidthRatio,
           ),
-        itemCount: cardData['data'].length,
+        itemCount: filteredData.length,
         itemBuilder: (context, index){
-          return MagicCard(cardData['data'][index]);
+          return MagicCard(filteredData[index]);
         }
       ),
     )
@@ -175,14 +367,29 @@ Widget buildSearchResults(Map<String, dynamic> cardData) {
 }
 
 
+
+
+
+enum Mode {
+  flip, 
+  twoSided,
+  normal}
+
+
 class MagicCard extends StatefulWidget {
   final Map<String, dynamic> cardData;
 
-  MagicCard(this.cardData);
+  late String layout;
+  Mode cardMode = Mode.normal;
+
+  MagicCard(this.cardData, {super.key}) : layout = cardData['layout'] ?? 'normal' {
+    layout = cardData['layout'];
+  }
 
   @override
   MagicCardState createState() => MagicCardState();
 }
+
 
 class MagicCardState extends State<MagicCard> {
   bool frontFaced = true;
@@ -191,28 +398,44 @@ class MagicCardState extends State<MagicCard> {
   Widget build(BuildContext context) {
 
     // Initialize the image URLs with null safety checks
-    final imageUrl = widget.cardData['image_uris']?['normal'];
-    final doubleSideUrl = (widget.cardData['card_faces'] != null &&
-            widget.cardData['card_faces'].isNotEmpty)
-        ? widget.cardData['card_faces'][(frontFaced ? 0 : 1)]['image_uris']['normal']
-        : null;
+    final layout = widget.cardData['layout'];
+    String imageUrl;
+
+    switch(layout){
+      case "flip": 
+      imageUrl =  widget.cardData['image_uris']['normal']; 
+      widget.cardMode = Mode.flip; break;
+
+      case "transform": 
+      case "modal_dfc": 
+      case "reversible_card":
+        imageUrl = widget.cardData['card_faces'][(frontFaced ? 0 : 1)]['image_uris']['normal']; 
+        widget.cardMode = Mode.twoSided; break;
+
+      default: 
+        imageUrl = widget.cardData['image_uris']['normal']; 
+        break;
+    }
     
     return Stack(
       children: [
 
         Positioned(
-          child: 
-          (imageUrl != null) ? Image.network(imageUrl!): 
-          (doubleSideUrl != null ? Image.network(doubleSideUrl!):
-          Center(child: Text('No image available',style: TextStyle(color: Colors.grey),),
-                    )),
-        ),
+          child: Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.rotationZ((!frontFaced && widget.cardMode == Mode.flip) ? 3.141592 : 0),
+          child: (imageUrl != null) ? 
+
+            Image.network(imageUrl!): 
+
+            Center(child: Text('No image available',style: TextStyle(color: Colors.grey))),
+        )),
 
         Positioned(
-          top: 37,
-          left: 19,
+          top: 110,
+          right: 19,
           
-            child: (doubleSideUrl != null)
+            child: (widget.cardMode != Mode.normal)
                 ? 
                 Container(
                   
@@ -242,18 +465,8 @@ class MagicCardState extends State<MagicCard> {
   }
 }
 
-enum sortBy {
-  name, 
-  set,
-  rarity,
-  color,
-  price,
-  cmc,
-  edhrec,
-  }
-
-sortBy currentSort = sortBy.name;
 String currentSortString = "Name";
+bool revSort = true;
 
 final sortList = [
   "Name", 
@@ -264,52 +477,135 @@ final sortList = [
   "Rarity",
   "Set"];
 
-void sortCardData(String value, Map<String, dynamic> cardData) {
+  //TODO: RECURSIVE SORT 
+  //PRIMARY SORTING -> RELEASE DATE -> COLLECTOR NUMBER
 
+Map<String, dynamic> sortCardData(String value, Map<String, dynamic> cardData) {
   switch (value) {
     case "Name":
-      currentSort = sortBy.name;
-      currentSortString = sortList[0];
-      cardData['data'].sort((a, b) => a['name'].compareTo(b['name']));
+      cardData['data'].sort((a, b) {
+        String nameA = a['name'] ?? a['card_faces']?[0]['name'] ?? '';
+        String nameB = b['name'] ?? b['card_faces']?[0]['name'] ?? '';
+        return revSort ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
+      });
       break;
 
     case "EDHRec Rank":
-      currentSort = sortBy.edhrec;
-      currentSortString = sortList[1];
-      cardData['data'].sort((a, b) => a['edhrec_rank'].compareTo(b['edhrec_rank']));
+      cardData['data'].sort((a, b) {
+        int rankA = a['edhrec_rank'] ?? a['card_faces']?[0]['edhrec_rank'] ?? 999999;
+        int rankB = b['edhrec_rank'] ?? b['card_faces']?[0]['edhrec_rank'] ?? 999999;
+        return revSort ? rankA.compareTo(rankB) : rankB.compareTo(rankA);
+      });
       break;
 
     case "Price":
-      currentSort = sortBy.price;
-      currentSortString = sortList[2];
-      cardData['data'].sort((a, b) => a['prices']['usd']?.compareTo(b['prices']['usd']) ?? 0);
+      cardData['data'].sort((a, b) {
+        double priceA = double.tryParse(a['prices']?['usd'] ?? a['card_faces']?[0]['prices']?['usd'] ?? '0') ?? 0.0;
+        double priceB = double.tryParse(b['prices']?['usd'] ?? b['card_faces']?[0]['prices']?['usd'] ?? '0') ?? 0.0;
+        return revSort ? priceB.compareTo(priceA) : priceA.compareTo(priceB);
+      });
       break;
 
     case "Mana Cost":
-      currentSort = sortBy.cmc;
-      currentSortString = sortList[3];
-      cardData['data'].sort((a, b) => a['cmc'].compareTo(b['cmc']));
+      cardData['data'].sort((a, b) {
+        double cmcA = a['cmc'] ?? a['card_faces']?[0]['cmc'] ?? 0.0;
+        double cmcB = b['cmc'] ?? b['card_faces']?[0]['cmc'] ?? 0.0;
+        return revSort ? cmcA.compareTo(cmcB) : cmcB.compareTo(cmcA);
+      });
       break;
 
     case "Color":
-      currentSort = sortBy.color;
-      currentSortString = sortList[4];
-      cardData['data'].sort((a, b) => a['colors'].toString().compareTo(b['colors'].toString()));
+      cardData['data'].sort((a, b) {
+        List<dynamic> colorA = a['colors'] ?? a['card_faces']?[0]['colors'] ?? [];
+        List<dynamic> colorB = b['colors'] ?? b['card_faces']?[0]['colors'] ?? [];
+        return revSort ? compareWUBRG(colorA, colorB) : compareWUBRG(colorB, colorA);
+      });
       break;
 
     case "Rarity":
-      currentSort = sortBy.rarity;
-      currentSortString = sortList[5];
-      cardData['data'].sort((a, b) => a['rarity'].compareTo(b['rarity']));
+      cardData['data'].sort((a, b) {
+        String rarityA = a['rarity'] ?? a['card_faces']?[0]['rarity'] ?? [];
+        String rarityB = b['rarity'] ?? b['card_faces']?[0]['rarity'] ?? [];
+        return revSort ? compareRarity(rarityA, rarityB) : compareRarity(rarityB, rarityA);
+      });
       break;
 
     case "Set":
-      currentSort = sortBy.set;
-      currentSortString = sortList[6];
-      cardData['data'].sort((a, b) => a['set_name'].compareTo(b['set_name']));
-      break;
-
-    default:
+      cardData['data'].sort((a, b) {
+        String setA = a['released_at'] ?? a['card_faces']?[0]['released_at'] ?? [];
+        String setB = b['released_at'] ?? b['card_faces']?[0]['released_at'] ?? [];
+        return revSort ? setA.compareTo(setB) : setB.compareTo(setA);
+      });
       break;
   }
+
+  return cardData;
+}
+
+int compareRarity(String _rarityA, String _rarityB){
+
+  const Map<String, int> rarityPriority = {
+    "common": 0,
+    "uncommon" : 1,
+    "rare": 2,
+    "mythic": 3,
+    "special": 4,
+    "bonus" : 5
+  };
+
+  return rarityPriority[_rarityA]! - rarityPriority[_rarityB]!;
+}
+
+int compareWUBRG(List<dynamic> _colorA, List<dynamic> _colorB){
+
+  const Map<String, int> colorPriority = {
+    "" : 0, //Colorless
+    "W": 1, //White
+    "U": 2, //Blue
+    "B": 3, //Black
+    "R": 4, //Red
+    "G": 5, //Green
+
+    "WU": 6, //Azorius
+    "UB": 7, //Dimir
+    "BR": 8, //Rakdos
+    "RG": 9, //Gruul
+    "WG": 10, //Selesnya
+
+    "WB": 11, //Orzhov
+    "UR": 12, //Izzet
+    "BG": 13, //Golgari
+    "WR": 14, //Boros
+    "UG": 15, //Simic
+
+    "WUB": 16, //Esper
+    "UBR": 17, //Grixis
+    "BRG": 18, //Jund
+    "WRG": 19, //Naya
+    "WUG": 20, //Bant
+
+    "WUR": 21, //Jeskai
+    "UBG": 22, //Sultai
+    "WBR": 23, //Mardu
+    "URG": 24, //Temur
+    "WBG": 25, //Abzan
+
+    "WUBR" : 26, //Yore-Tiller
+    "UBRG" : 27, //Glint-Eye
+    "WBRG" : 28, //Dune-Brood
+    "WURG" : 29, //Ink-Treader
+    "WUBG" : 30,  //Witch-Maw
+
+    "WUBRG" : 31 //WUBRG
+  };
+
+  List<String> sortColors(List<dynamic> colors){
+    return colors.map((colors) => colors.toString()).toList()
+    ..sort((a, b) => (colorPriority[a] ?? 999).compareTo(colorPriority[b] ?? 999));
+  }
+
+  String colorA = sortColors(_colorA).join();
+  String colorB = sortColors(_colorB).join();
+
+  return colorPriority[colorA]! - colorPriority[colorB]!;
 }
