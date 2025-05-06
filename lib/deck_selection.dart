@@ -1,7 +1,6 @@
-import 'dart:ui';
 
+import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart';
 import 'main.dart';
 import 'card.dart';
 import 'deck_builder.dart';
@@ -54,13 +53,24 @@ class Deck {
   late Map<MCard, int> deckList;
   late Format deckFormat;
   List<String> deckIdentity = [];
+  final String id;
 
   Deck({
     required this.deckName,
     required this.deckFormat,
     this.deckList = const {},
     this.deckIdentity = const []
-  });
+  }) : id = Uuid().v4();
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Deck &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 
 }
 
@@ -79,12 +89,31 @@ class _deckSelectionWidgetState extends State<deckSelectionWidget>{
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(apptitle)),
-      body: ListView.builder(
-        itemCount: widget.decks.length,
-        itemBuilder: (context, index){
-          Deck deck = decks[index];
-          return deckNameplateWidget(deck, ((){setState((){});}));
-        }
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children:[
+          Expanded(child:
+            ListView.builder(
+              itemCount: widget.decks.length+1,
+              itemBuilder: (context, index){
+                if(index < widget.decks.length){
+                  Deck deck = decks[index];
+                  return deckNameplateWidget(deck, ((){setState((){});}));
+                }else{
+                  return ElevatedButton.icon(
+                    label: Text("New Deck"),
+                    icon: Icon(Icons.add, color: Colors.green),
+                    onPressed: (){
+                      setState((){
+                        decks.add(Deck(deckName: "New Deck", deckFormat: Format.none));
+                      });
+                    });
+                }
+              }
+            )
+          ),
+
+        ]
       )
     );
   }
@@ -105,17 +134,6 @@ class deckNameplateWidget extends StatelessWidget{
       child: Card(
           child: Stack(
             children: [
-
-              Positioned(
-                child: GestureDetector(
-                  onTap: () {
-                    baseplateKey.currentState?.update(
-                        newWidget: deckEditorWidget(deck)
-                    );
-                    onUpdate();
-                  }
-                )
-              ),
 
               Positioned(
                 top: padding,
@@ -144,6 +162,18 @@ class deckNameplateWidget extends StatelessWidget{
                 bottom: padding,
                 right: padding,
                 child: identityToIcons(deck.deckIdentity)
+              ),
+
+              
+              Positioned(
+                child: GestureDetector(
+                  onTap: () {
+                    baseplateKey.currentState?.update(
+                        newWidget: deckEditorWidget(deck)
+                    );
+                    onUpdate();
+                  }
+                )
               ),
 
               Positioned(
@@ -235,6 +265,7 @@ void deckOptions(BuildContext context, Deck deck, VoidCallback onUpdate){
                 onUpdate();
               },
             ),
+
           ],
         ),
       );

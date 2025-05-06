@@ -1,8 +1,4 @@
-import 'dart:math';
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
-import 'scryfall.dart';
 import 'main.dart';
 import 'card.dart';
 import 'deck_selection.dart';
@@ -53,7 +49,9 @@ class DeckViewer extends StatefulWidget{
   late Deck deck;
 
   @override
-  DeckViewer({required this.deck, Key? key}) : super(key: key);
+  DeckViewer({required this.deck, Key? key}) : super(key: key){
+    loadDeck(deck);
+  }
 
   @override
   _DeckViewer createState() => _DeckViewer();
@@ -95,6 +93,7 @@ class _DeckViewer extends State<DeckViewer> {
             baseplateKey.currentState?.update(
               newWidget: deckSelectionWidget(decks)
             );
+            clearData();
           }
         ),
         //Save Deck
@@ -124,7 +123,7 @@ class _DeckViewer extends State<DeckViewer> {
             Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
             child: Text(
-              section,
+              "$section (${getNumCardsIn(section)})",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             )),
 
@@ -144,7 +143,7 @@ class _DeckViewer extends State<DeckViewer> {
                   final card = cardMap.keys.first;
                   final quantity = cardMap[card];
 
-                  return CardWidgetForDeckBuilder(card, quantity!);
+                  return CardWidgetForDeckBuilder(card, quantity!, widget.deck.deckFormat);
                 },
               )
             )
@@ -215,16 +214,18 @@ String classifyCard(MCard card){
   else if(typeline.contains("planeswalker")){return "Planeswalkers";}
   else if(typeline.contains("instant")){return "Instants";}
   else if(typeline.contains("sorcery")){return "Sorceries";}
-  else if(typeline.contains("artifact")){return "Instants";}
+  else if(typeline.contains("artifact")){return "Artifacts";}
   else if(typeline.contains("enchantment")){return "Enchantments";}
   else {return "Other";}
   
 }
 
-void addCard(String id) async {
+void addCard(MCard card, {int cardQuantity = 1}) {
 
-  MCard card = await getCardFromID(id);
   String section = card.cardType;
+
+  if(card.isCommander){section = "Commander";}
+  if(card.isSideboard){section = "Sideboard";}
 
   for(var cardMap in deckList["Commander"]!){
     if(cardMap.keys.contains(card)){
@@ -237,27 +238,48 @@ void addCard(String id) async {
     }
   }
 
-  deckViewerKey.currentState!.setState(() {
-
-    if(cardQuantities.keys.contains(card)){
-      cardQuantities[card] = cardQuantities[card]! + 1;
-      
-      for (var cardMap in deckList[section]!) {
-        if (cardMap.containsKey(card)) {
-          cardMap[card] = cardQuantities[card]!;
-          break;
-        }
-    }
-    }else{
-      cardQuantities[card] = 1;
-      deckList[section]!.add({card: cardQuantities[card]!});
-    }
-  });
+  if(cardQuantities.keys.contains(card)){
+    cardQuantities[card] = cardQuantities[card]! + cardQuantity;
+    
+    for (var cardMap in deckList[section]!) {
+      if (cardMap.containsKey(card)) {
+        cardMap[card] = cardQuantities[card]!;
+        break;
+      }
+  }
+  }else{
+    cardQuantities[card] = cardQuantity;
+    deckList[section]!.add({card: cardQuantities[card]!});
+  }
+  
 }
 
-void removeCard(String id) async {
+void updateCardPosition(MCard card) {
+  int quantity = 0;
 
-  MCard card = await getCardFromID(id);
+  for (String section in deckList.keys) {
+    final entry = deckList[section]!.firstWhere(
+      (entry) => entry.containsKey(card),
+      orElse: () => {},
+    );
+
+    if (entry.isNotEmpty) {
+      quantity = entry[card]!;
+      
+      cardQuantities.removeWhere((key, value) => key == card);
+
+      deckList[section]!.remove(entry);
+
+      break;
+    }
+  }
+
+  card.cardType = classifyCard(card);
+  addCard(card, cardQuantity: quantity);
+}
+
+void removeCard(MCard card) {
+
   String section = card.cardType;
 
   for(var cardMap in deckList["Commander"]!){
@@ -280,11 +302,11 @@ void removeCard(String id) async {
         deckList[section]!.removeWhere((entry) => entry.containsKey(card));
       }else{
         for (var entry in deckList[section]!) {
-        if (entry.containsKey(card)) {
-          entry[card] = cardQuantities[card]!;
-          break;
+          if (entry.containsKey(card)) {
+            entry[card] = cardQuantities[card]!;
+            break;
+          }
         }
-      }
       }
     }
 
@@ -336,10 +358,45 @@ int getNumCards({bool includeLands = true}){
   return cardTotal;
 }
 
+void clearData(){
+  cardQuantities.clear();
+  for(String section in deckList.keys){
+    deckList[section]!.clear();
+  }
+}
+
+void loadDeck(Deck deck){
+  for(MCard card in deck.deckList.keys){
+    addCard(card, cardQuantity: deck.deckList[card]!);
+  }
+}
+
 void saveDeck(Deck deck){
-  for(Deck iter_deck in decks){
-    if(iter_deck == deck){
-      
+  for(int i=0; i<decks.length; i++){
+    Deck iterDeck = decks[i];
+    if(iterDeck == deck){
+      decks[i].deckList = Map.from(cardQuantities);
+      decks[i].deckIdentity = getDeckIdentity(decks[i]);
+      return;
     }
   }
+  throw Exception("No deck found to save");
+}
+
+List<String> getDeckIdentity(Deck deck){
+  List<String> deckIdentity = [];
+
+  for(MCard card in deck.deckList.keys){
+    for(String color in card.cardData['color_identity']){
+      if(!deckIdentity.contains(color)){
+        deckIdentity.add(color);
+      }
+    }
+  }
+
+  if(deckIdentity.isEmpty && deck.deckList.isNotEmpty){
+    deckIdentity.add("C");
+  }
+
+  return deckIdentity;
 }

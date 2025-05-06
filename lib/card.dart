@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'scryfall.dart';
-import 'main.dart';
 import 'deck_builder.dart';
+import 'deck_selection.dart';
 
 class MCard {
   late final String id;
@@ -10,10 +9,11 @@ class MCard {
   late final Mode cardMode;
   late final String imageURI;
   late final String imageBackURI;
-  late final String cardType;
+  late String cardType;
 
   bool isCommander = false;
   bool isSideboard = false;
+  bool defaultFrontFace = true;
 
   @override
   bool operator ==(Object other) =>
@@ -25,10 +25,14 @@ class MCard {
   @override
   int get hashCode => id.hashCode;
 
-  MCard(this.cardData){
+  MCard(this.cardData, {ic = false, si = false, dff = true}){
+
+    isCommander = ic;
+    isSideboard = si;
+    defaultFrontFace = dff;
+
     layout = cardData['layout'] ?? 'normal';
     id = cardData['id'];
-    cardType = classifyCard(this);
 
     switch (layout) {
       case "flip":
@@ -50,9 +54,14 @@ class MCard {
         cardMode = Mode.normal;
         break;
    }
+
+    cardType = classifyCard(this);
 }
 
   String getImageURI({bool isFront=true}){
+
+    if(!defaultFrontFace){isFront = !isFront;}
+
     if(isFront)
     {return imageURI;}
     else
@@ -60,7 +69,7 @@ class MCard {
   }
 
   String getTypeline(){
-    return cardData['type_line'];
+    return cardMode == Mode.normal ? cardData['type_line'] : cardData['card_faces'][defaultFrontFace ? 0 : 1]['type_line'];
   }
 
   String getName(){return cardData['name'];}
@@ -68,6 +77,11 @@ class MCard {
   double getCMC(){
     return cardData['cmc'];
   }
+
+/*
+  Map<String, dynamic> toJSON(){
+  }
+  */
 }
 
 
@@ -121,7 +135,11 @@ class _CardWidgetForSearchState extends State<CardWidgetForSearch> {
         width: 50,
         child: isHovered
              ? ElevatedButton(
-              onPressed: () {addCard(widget.card.id);},
+              onPressed: () {
+                deckViewerKey.currentState?.setState((){
+                  addCard(widget.card);
+                });
+                },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green.withOpacity(0.6),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -180,8 +198,9 @@ class _CardWidgetForSearchState extends State<CardWidgetForSearch> {
 class CardWidgetForDeckBuilder extends StatefulWidget {
   final MCard card;
   final int cardQuantity;
+  final Format deckFormat;
   
-  CardWidgetForDeckBuilder(this.card, this.cardQuantity);
+  CardWidgetForDeckBuilder(this.card, this.cardQuantity, this.deckFormat);
 
   @override
   _CardWidgetForDeckBuilderState createState() => _CardWidgetForDeckBuilderState();
@@ -190,6 +209,7 @@ class CardWidgetForDeckBuilder extends StatefulWidget {
 class _CardWidgetForDeckBuilderState extends State<CardWidgetForDeckBuilder>{
   bool frontFaced = true;
   bool isHovered = false;
+
 
   @override
   Widget build(BuildContext context) {
@@ -221,7 +241,11 @@ class _CardWidgetForDeckBuilderState extends State<CardWidgetForDeckBuilder>{
         width: 20,
         child: isHovered
             ? ElevatedButton(
-              onPressed: () {addCard(widget.card.id);},
+              onPressed: () {
+                deckViewerKey.currentState?.setState((){
+                  addCard(widget.card);
+                });
+                },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green.withOpacity(0.6),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -239,7 +263,11 @@ class _CardWidgetForDeckBuilderState extends State<CardWidgetForDeckBuilder>{
         width: 20,
         child: isHovered
             ? ElevatedButton(
-              onPressed: () {removeCard(widget.card.id);},
+              onPressed: () {
+                deckViewerKey.currentState?.setState((){
+                  removeCard(widget.card);
+                });
+                },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red.withOpacity(0.6),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -334,7 +362,19 @@ class _CardWidgetForDeckBuilderState extends State<CardWidgetForDeckBuilder>{
                       },
                     ))
                 : SizedBox.shrink(),
-          )
+          ),
+      
+      //Error for illegal cards
+      Positioned(
+        top: 0,
+        left: 0,
+        child: 
+        cardIsLegalIn(widget.card, widget.deckFormat) ? SizedBox.shrink() :
+        Icon(Icons.error,
+          color: Colors.red,
+        )
+      )
+      
       ],
     );
   }
@@ -362,8 +402,26 @@ void cardExtraOptions(MCard card, TapDownDetails details, BuildContext context){
         child: ElevatedButton(
           onPressed: ((){toggleSideboard(card); Navigator.pop(context);}), 
           child:Text(card.isSideboard ? "Move to Mainboard" : "Move to Sideboard"))
+      )),
+
+    if(card.cardMode != Mode.normal)
+      PopupMenuItem(child: Center(
+        child: ElevatedButton(
+          onPressed: ((){deckViewerKey.currentState!.setState((){card.defaultFrontFace = !card.defaultFrontFace; updateCardPosition(card); Navigator.pop(context);});}), 
+          child:Text("Treat as flip side"))
       ))
 
+      
     ],
     color: Colors.black.withOpacity(0.3));
+}
+
+bool cardIsLegalIn(MCard card, Format format){
+
+  if(format == Format.none) {return true;}
+
+  if(card.cardData['legalities'][formatToString(format).toLowerCase()] == "legal"){
+    return true;
+  }
+  return false;
 }

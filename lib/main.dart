@@ -1,8 +1,5 @@
 import 'deck_selection.dart';
 import 'package:flutter/material.dart';
-import 'scryfall.dart';
-import 'search.dart';
-import 'deck_builder.dart';
 
 String apptitle = 'Scryfall Deckbuilder';
 String appbarText = 'Deckbuilder';
@@ -43,13 +40,7 @@ class _baseplateState extends State<baseplate> {
   }
 }
 
-List<Deck> decks = [
-  Deck(deckName: "Azorius Control", deckFormat: Format.standard, deckIdentity: ["W", "U"]),
-  Deck(deckName: "Boros Convoke", deckFormat: Format.standard, deckIdentity: ["W", "R"]),
-  Deck(deckName: "Merfolk Tribal", deckFormat: Format.commander, deckIdentity: ["U", "G"]),
-  Deck(deckName: "Jund Reanimator", deckFormat: Format.pauper, deckIdentity: ["B", "R", "G"]),
-  Deck(deckName: "WIP", deckFormat: Format.none)
-];
+List<Deck> decks = [];
 
 void main() {
 
