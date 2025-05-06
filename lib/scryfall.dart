@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'card.dart';
 import 'package:http/http.dart' as http;
 
 String baseUrl = 'https://api.scryfall.com/cards/search?q=';
@@ -16,6 +17,21 @@ Future<Map<String, dynamic>> fetchCard(String query) async {
     return data;
   }
   else {
+    throw Exception('Failed to load card data');
+  }
+}
+
+String getCardURL = "https://api.scryfall.com/cards/";
+
+Future<MCard> getCardFromID(String id) async{
+  
+  final url = Uri.parse("$getCardURL$id");
+  final response = await http.get(url);
+
+  if(response.statusCode == 200){
+    final data = json.decode(response.body);
+    return MCard(data);
+  }else {
     throw Exception('Failed to load card data');
   }
 }
@@ -162,10 +178,6 @@ String parseQuery(String q){
 
         }
         break;
-      
-      //set legality
-      case "legal":
-      addition = "legal:$arg"; break;
       
 
       default: 

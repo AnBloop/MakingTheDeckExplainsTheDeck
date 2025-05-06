@@ -1,14 +1,22 @@
+import 'deck_selection.dart';
 import 'package:flutter/material.dart';
 import 'scryfall.dart';
 import 'search.dart';
+import 'deck_builder.dart';
 
-String apptitle = 'Scryfall Card Search';
-String appbarText = 'Scryfall Card Search';
-Widget activeWidget = CardSearchWidget();
+String apptitle = 'Scryfall Deckbuilder';
+String appbarText = 'Deckbuilder';
+Widget activeWidget = Placeholder();
+
+
+double heightToWidthRatio = 63/88;
 
 GlobalKey<_baseplateState> baseplateKey = GlobalKey<_baseplateState>();
 
 class baseplate extends StatefulWidget {
+
+  baseplate({Key? key}) : super(key : key);
+
   @override
   _baseplateState createState() => _baseplateState();
 }
@@ -30,23 +38,27 @@ class _baseplateState extends State<baseplate> {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text(appbarText),
-        ),
-        body: Center(
-          child: activeWidget,
-        ),
-      ),
+      home: activeWidget
     );
   }
 }
 
+List<Deck> decks = [
+  Deck(deckName: "Azorius Control", deckFormat: Format.standard, deckIdentity: ["W", "U"]),
+  Deck(deckName: "Boros Convoke", deckFormat: Format.standard, deckIdentity: ["W", "R"]),
+  Deck(deckName: "Merfolk Tribal", deckFormat: Format.commander, deckIdentity: ["U", "G"]),
+  Deck(deckName: "Jund Reanimator", deckFormat: Format.pauper, deckIdentity: ["B", "R", "G"]),
+  Deck(deckName: "WIP", deckFormat: Format.none)
+];
 
 void main() {
-  runApp(baseplate());
 
+  runApp(baseplate(key: baseplateKey));
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
   baseplateKey.currentState?.update(
-    newWidget: CardSearchWidget(),
-  );
+      newWidget: deckSelectionWidget(decks)
+  );});
 }
+
+

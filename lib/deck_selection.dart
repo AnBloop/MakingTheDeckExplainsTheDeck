@@ -1,0 +1,299 @@
+import 'dart:ui';
+
+import 'package:flutter/material.dart';
+import 'package:path/path.dart';
+import 'main.dart';
+import 'card.dart';
+import 'deck_builder.dart';
+import 'search.dart';
+
+enum Format {
+  standard,
+  commander,
+  pauper,
+  none
+}
+
+Format stringToFormat(String value) {
+  return Format.values.firstWhere(
+    (format) => formatToString(format).toLowerCase() == value.toLowerCase(),
+    orElse: () => Format.none,
+  );
+}
+
+String formatToString(Format f){
+  switch(f){
+    case Format.standard: return "Standard";
+    case Format.commander: return "Commander";
+    case Format.pauper: return "Pauper";
+    default: return "WIP";
+  }
+}
+
+const double iconSize = 20;
+const double iconSpacing = 2;
+
+Widget identityToIcons(List<String> identity){
+  return Row(
+    children: identity.map((symbol) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: iconSpacing),
+        child: Image.asset(
+          'assets/icons/mana_${symbol.toLowerCase()}.png',
+          width: iconSize,
+          height: iconSize
+        )
+      );
+    }).toList()
+  );
+}
+
+class Deck {
+
+  late String deckName;
+  late Map<MCard, int> deckList;
+  late Format deckFormat;
+  List<String> deckIdentity = [];
+
+  Deck({
+    required this.deckName,
+    required this.deckFormat,
+    this.deckList = const {},
+    this.deckIdentity = const []
+  });
+
+}
+
+class deckSelectionWidget extends StatefulWidget{
+
+  final List<Deck> decks;
+
+  deckSelectionWidget(this.decks);
+  
+  @override
+  State<StatefulWidget> createState() => _deckSelectionWidgetState();
+}
+
+class _deckSelectionWidgetState extends State<deckSelectionWidget>{
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(apptitle)),
+      body: ListView.builder(
+        itemCount: widget.decks.length,
+        itemBuilder: (context, index){
+          Deck deck = decks[index];
+          return deckNameplateWidget(deck, ((){setState((){});}));
+        }
+      )
+    );
+  }
+}
+
+class deckNameplateWidget extends StatelessWidget{
+
+  late final Deck deck;
+  late final VoidCallback onUpdate;
+  final double padding = 16;
+
+  deckNameplateWidget(this.deck, this.onUpdate);
+  
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 100,
+      child: Card(
+          child: Stack(
+            children: [
+
+              Positioned(
+                child: GestureDetector(
+                  onTap: () {
+                    baseplateKey.currentState?.update(
+                        newWidget: deckEditorWidget(deck)
+                    );
+                    onUpdate();
+                  }
+                )
+              ),
+
+              Positioned(
+                top: padding,
+                left: padding,
+                child: Text(
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold
+                  ),
+                  deck.deckName
+                  )),
+
+              Positioned(
+                bottom: padding,
+                left: padding,
+                child: 
+                  Text(
+                    style: TextStyle(
+                      fontSize: 15,
+                    ),
+                    formatToString(deck.deckFormat)
+                    ),
+                ),
+
+              Positioned(
+                bottom: padding,
+                right: padding,
+                child: identityToIcons(deck.deckIdentity)
+              ),
+
+              Positioned(
+                top: 0,
+                right: 0,
+                child: IconButton(
+                  icon: Icon(Icons.settings),
+                  iconSize: 20,
+                  onPressed: ((){
+                    deckOptions(context, deck, onUpdate);}),
+                )
+                )
+            ],
+          )
+      )
+    );
+  }
+}
+
+class deckEditorWidget extends StatelessWidget{
+
+  Deck deck;
+
+  deckEditorWidget(this.deck);
+
+  Widget build(BuildContext context){
+
+    TextEditingController deckNameController = TextEditingController(text: deck.deckName);
+
+    return Scaffold(
+        appBar: AppBar(
+          title: TextField(
+            controller: deckNameController,
+            decoration: InputDecoration(
+              border: InputBorder.none,
+            ),
+            onSubmitted: (value){
+              deck.deckName = value;
+            },
+          ),
+        ),
+        body: Center(
+          child: PageView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              DeckBuilderWidget(deck),
+              CardSearchWidget(),
+              ],
+        ),
+      ),
+    );
+  }
+}
+
+void deckOptions(BuildContext context, Deck deck, VoidCallback onUpdate){
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+
+            //Edit Deck Name
+            ListTile(
+              leading: Icon(Icons.edit),
+              title: Text("Edit Deck Name"),
+              onTap: () {
+                editDeckName(deck, context, onUpdate);
+              },
+            ),
+
+            //Change Format
+            ListTile(
+              leading: Icon(Icons.change_circle),
+              title: Text("Change Deck Format"),
+              onTap: () {
+                editDeckFormat(deck, context, onUpdate);
+              },
+            ),
+
+            //Delete Deck
+            ListTile(
+              leading: Icon(Icons.delete, color: Colors.red),
+              title: Text("Delete Deck", style: TextStyle(color: Colors.red)),
+              onTap: () {
+                Navigator.pop(context);
+                decks.remove(deck);
+                onUpdate();
+              },
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+void editDeckName(Deck deck, BuildContext context, VoidCallback onUpdate){
+
+  TextEditingController controller = TextEditingController(text: deck.deckName);
+
+  showDialog(
+    context: context,
+    builder: (context){
+      return AlertDialog(
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              suffixIcon: IconButton(
+                icon: Icon(Icons.check),
+                onPressed: () {
+                  deck.deckName = controller.text;
+                  Navigator.pop(context);
+                  onUpdate();
+                  })
+            ),
+            onSubmitted: (text) {
+              deck.deckName = text;
+              Navigator.pop(context);
+              onUpdate();
+            },
+          )
+        );
+    }
+  );
+}
+
+void editDeckFormat(Deck deck,  BuildContext context, VoidCallback onUpdate){
+  showDialog(
+    context: context,
+    builder: (context){
+      return AlertDialog(
+        content: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value : formatToString(deck.deckFormat),
+            items: Format.values.map((Format val) {
+                return DropdownMenuItem<String>(
+                  value: formatToString(val), // Value to be selected
+                  child: Text(formatToString(val)), // Text to display
+                );
+              }).toList(),
+            onChanged: (value){
+              deck.deckFormat = stringToFormat(value!);
+              Navigator.pop(context);
+              onUpdate();
+            }
+        )
+        )
+      );
+    }
+  );
+}

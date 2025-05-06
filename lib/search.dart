@@ -1,32 +1,35 @@
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'scryfall.dart';
 import 'main.dart';
+import 'card.dart';
+import 'deck_builder.dart';
 import 'package:http/http.dart' as http;
 
 
 
 class CardSearchWidget extends StatefulWidget {
+
+  const CardSearchWidget({Key? key}) : super(key: key);
+
   @override
   _CardSearchWidgetState createState() => _CardSearchWidgetState();
 }
 
-class _CardSearchWidgetState extends State<CardSearchWidget> {
+class _CardSearchWidgetState extends State<CardSearchWidget> with AutomaticKeepAliveClientMixin{
   final TextEditingController _controller = TextEditingController();
 
   String searchText = '';
   Map<String, dynamic>? cardData = null;
+
+  final PageStorageBucket bucket = PageStorageBucket();
 
   void search() async{
     if (searchText.isNotEmpty) {
       try {
         cardData = await fetchCard(searchText);
         cardData = sortCardData(currentSortString, cardData!);
-        setState(() {
-          activeWidget = CardSearchWidget();
-        });
+        setState(() {});
       } catch (e) {
         setState(() {
           showDialog(context: context, builder: (context) {
@@ -38,7 +41,10 @@ class _CardSearchWidgetState extends State<CardSearchWidget> {
 
   final double iconSize = 20;
 
+  bool get wantKeepAlive => true;
+
   Widget build(BuildContext context) {
+    super.build(context);
     return Column(
 
       children:[
@@ -216,6 +222,7 @@ class _CardSearchWidgetState extends State<CardSearchWidget> {
             
             //Options Bar
 
+              //Zoom out
               Positioned(
                 bottom: 0,
                 right: 30,
@@ -231,6 +238,7 @@ class _CardSearchWidgetState extends State<CardSearchWidget> {
                 ),
               ),
 
+              //Zoom in
               Positioned(
                 bottom: 0,
                 right: 0,
@@ -246,6 +254,7 @@ class _CardSearchWidgetState extends State<CardSearchWidget> {
               ),
               ),
 
+              //Reverse sort button
               Positioned(
                 bottom: 0,
                 right: 65,
@@ -257,11 +266,12 @@ class _CardSearchWidgetState extends State<CardSearchWidget> {
                   });},
                 ),),
 
+              //Dropdown sort
               Positioned(
                 bottom: 0,
                 right: 100,
                 height: 40,
-                child: DropdownButton(
+                child: DropdownButtonHideUnderline(child: DropdownButton(
                   value: currentSortString,
                   items: sortList.map((String value) {
                     return DropdownMenuItem<String>(
@@ -276,7 +286,7 @@ class _CardSearchWidgetState extends State<CardSearchWidget> {
                     });
                   },
                   
-                  )
+                  ))
               ),
 
               
@@ -312,7 +322,6 @@ Map<String, bool> colorFilter = {
 final int minCardsPerRow = 1;
 final int maxCardsPerRow = 5;
 int cardsPerRow = 2;
-double heightToWidthRatio = 63/88;
 
 Widget buildSearchResults(Map<String, dynamic> cardData) {
 
@@ -326,8 +335,6 @@ Widget buildSearchResults(Map<String, dynamic> cardData) {
   }
 
   for(String color in card['color_identity']){
-
-
     if(!colorFilter[color]!){
       filteredData.remove(card);
       continue;
@@ -348,111 +355,14 @@ Widget buildSearchResults(Map<String, dynamic> cardData) {
           ),
         itemCount: filteredData.length,
         itemBuilder: (context, index){
-          return MagicCard(filteredData[index]);
+          MCard card = MCard(filteredData[index]);
+          return CardWidgetForSearch(card);
         }
       ),
     )
   );
 }
 
-
-
-
-
-enum Mode {
-  flip, 
-  twoSided,
-  normal}
-
-
-class MagicCard extends StatefulWidget {
-  final Map<String, dynamic> cardData;
-
-  late String layout;
-  Mode cardMode = Mode.normal;
-
-  MagicCard(this.cardData, {super.key}) : layout = cardData['layout'] ?? 'normal' {
-    layout = cardData['layout'];
-  }
-
-  @override
-  MagicCardState createState() => MagicCardState();
-}
-
-
-class MagicCardState extends State<MagicCard> {
-  bool frontFaced = true;
-
-  @override
-  Widget build(BuildContext context) {
-
-    // Initialize the image URLs with null safety checks
-    final layout = widget.cardData['layout'];
-    String imageUrl;
-
-    switch(layout){
-      case "flip": 
-      imageUrl =  widget.cardData['image_uris']['normal']; 
-      widget.cardMode = Mode.flip; break;
-
-      case "transform": 
-      case "modal_dfc": 
-      case "reversible_card":
-        imageUrl = widget.cardData['card_faces'][(frontFaced ? 0 : 1)]['image_uris']['normal']; 
-        widget.cardMode = Mode.twoSided; break;
-
-      default: 
-        imageUrl = widget.cardData['image_uris']['normal']; 
-        break;
-    }
-    
-    return Stack(
-      children: [
-
-        Positioned(
-          child: Transform(
-          alignment: Alignment.center,
-          transform: Matrix4.rotationZ((!frontFaced && widget.cardMode == Mode.flip) ? 3.141592 : 0),
-          child: (imageUrl != null) ? 
-
-            Image.network(imageUrl!): 
-
-            Center(child: Text('No image available',style: TextStyle(color: Colors.grey))),
-        )),
-
-        Positioned(
-          top: 110,
-          right: 19,
-          
-            child: (widget.cardMode != Mode.normal)
-                ? 
-                Container(
-                  
-                  height: 25,
-                  width: 25,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.black.withOpacity(0.3)
-                  ),
-
-                  child: IconButton(
-                      icon: Icon(Icons.rotate_left),
-                      color: Colors.white,
-                      iconSize: 20,
-                      constraints: BoxConstraints(),
-                      padding: EdgeInsets.zero,
-                      onPressed: () {
-                        setState(() {
-                          frontFaced = !frontFaced;
-                        });
-                      },
-                    ))
-                : SizedBox.shrink(),
-          )
-      ],
-    );
-  }
-}
 
 String currentSortString = "Name";
 bool revSort = true;
