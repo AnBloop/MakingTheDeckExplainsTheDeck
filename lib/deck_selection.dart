@@ -5,6 +5,7 @@ import 'main.dart';
 import 'card.dart';
 import 'deck_builder.dart';
 import 'search.dart';
+import 'scryfall.dart';
 
 enum Format {
   standard,
@@ -59,8 +60,11 @@ class Deck {
     required this.deckName,
     required this.deckFormat,
     this.deckList = const {},
-    this.deckIdentity = const []
-  }) : id = Uuid().v4();
+    this.deckIdentity = const [],
+    String? id,
+  }) : id = id ?? Uuid().v4() {
+    deckIdentity = getDeckIdentity(this);
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -72,7 +76,38 @@ class Deck {
   @override
   int get hashCode => id.hashCode;
 
+  Map<String, dynamic> toJson(){
+    return {
+      "id" : id,
+      "name" : deckName,
+      "format" : formatToString(deckFormat),
+      "deck_list": deckList.entries.map((entry) => {
+        "card": entry.key.toJson(),
+        "quantity": entry.value
+      }).toList()
+    };
+  }
 }
+
+Future<Deck> getDeckFromJson(Map<String, dynamic> deckData) async {
+  Map<MCard, int> deck_list = {};
+
+  for (var item in deckData['deck_list']) {
+    MCard card = await getCardFromJson(item['card']);
+    int quantity = item['quantity'];
+    deck_list[card] = quantity;
+  }
+
+  Deck deck = Deck(
+    deckName: deckData['name'],
+    id: deckData['id'],
+    deckFormat: stringToFormat(deckData['format']), // Assuming you have a reverse function
+    deckList: deck_list,
+  );
+
+  return deck;
+}
+
 
 class deckSelectionWidget extends StatefulWidget{
 
@@ -98,7 +133,7 @@ class _deckSelectionWidgetState extends State<deckSelectionWidget>{
               itemBuilder: (context, index){
                 if(index < widget.decks.length){
                   Deck deck = decks[index];
-                  return deckNameplateWidget(deck, ((){setState((){});}));
+                  return deckNameplateWidget(deck, ((){setState((){saveDecks();});}));
                 }else{
                   return ElevatedButton.icon(
                     label: Text("New Deck"),
@@ -106,6 +141,7 @@ class _deckSelectionWidgetState extends State<deckSelectionWidget>{
                     onPressed: (){
                       setState((){
                         decks.add(Deck(deckName: "New Deck", deckFormat: Format.none));
+                        saveDecks();
                       });
                     });
                 }
@@ -266,6 +302,16 @@ void deckOptions(BuildContext context, Deck deck, VoidCallback onUpdate){
               },
             ),
 
+            //DEBUG ONLY 
+            /*
+            ListTile(
+              leading: Icon(Icons.javascript_outlined, color: Colors.black),
+              title: Text("Deck to Json", style: TextStyle(color: Colors.black)),
+              onTap: () {
+                print(deck.toJson());
+              },
+            ),
+            */
           ],
         ),
       );
@@ -294,7 +340,7 @@ void editDeckName(Deck deck, BuildContext context, VoidCallback onUpdate){
             ),
             onSubmitted: (text) {
               deck.deckName = text;
-              Navigator.pop(context);
+              saveDecks();
               onUpdate();
             },
           )
@@ -319,7 +365,7 @@ void editDeckFormat(Deck deck,  BuildContext context, VoidCallback onUpdate){
               }).toList(),
             onChanged: (value){
               deck.deckFormat = stringToFormat(value!);
-              Navigator.pop(context);
+              saveDecks();
               onUpdate();
             }
         )

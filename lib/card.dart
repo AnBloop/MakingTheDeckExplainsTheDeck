@@ -1,3 +1,4 @@
+import 'package:cs442_mp6/scryfall.dart';
 import 'package:flutter/material.dart';
 import 'deck_builder.dart';
 import 'deck_selection.dart';
@@ -78,10 +79,15 @@ class MCard {
     return cardData['cmc'];
   }
 
-/*
-  Map<String, dynamic> toJSON(){
+  Map<String, dynamic> toJson(){
+    return {
+      "id": id,
+      "isCommander" : isCommander,
+      "isSideboard" : isSideboard,
+      "defaultFrontFace" : defaultFrontFace
+    };
   }
-  */
+  
 }
 
 

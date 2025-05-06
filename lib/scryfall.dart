@@ -37,6 +37,17 @@ Future<MCard> getCardFromID(String id) async{
 }
 
 
+
+Future<MCard> getCardFromJson(Map<String, dynamic> json) async {
+  MCard card = await getCardFromID(json['id']);
+  card.isCommander = json['isCommander'];
+  card.isSideboard = json['isSideboard'];
+  card.defaultFrontFace = json['defaultFrontFace'];
+  
+  return card;
+}
+
+
 //Scryfall Desugarer
 String parseQuery(String q){
   List<String> tokens = q.split(',');

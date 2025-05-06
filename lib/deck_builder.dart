@@ -14,6 +14,7 @@ final Map<String, List<Map<MCard, int>>> deckList = {
   "Artifacts" : [],
   "Enchantments" : [],
   "Planeswalkers" : [],
+  "Battles" : [],
   "Lands" : [],
   "Other" : [],
   "Sideboard" : []
@@ -216,6 +217,7 @@ String classifyCard(MCard card){
   else if(typeline.contains("sorcery")){return "Sorceries";}
   else if(typeline.contains("artifact")){return "Artifacts";}
   else if(typeline.contains("enchantment")){return "Enchantments";}
+  else if(typeline.contains("battle")){return "Battles";}
   else {return "Other";}
   
 }
@@ -377,6 +379,7 @@ void saveDeck(Deck deck){
     if(iterDeck == deck){
       decks[i].deckList = Map.from(cardQuantities);
       decks[i].deckIdentity = getDeckIdentity(decks[i]);
+      saveDecks();
       return;
     }
   }
