@@ -58,9 +58,12 @@ class DeckViewer extends StatefulWidget{
   _DeckViewer createState() => _DeckViewer();
 }
 
-int cardsAcross = 4;
 
 class _DeckViewer extends State<DeckViewer> {
+
+  final int minCardsAcross = 2;
+  final int maxCardsAcross = 15;
+  int cardsAcross = 4;
 
   @override
   Widget build(BuildContext context) {
@@ -84,27 +87,66 @@ class _DeckViewer extends State<DeckViewer> {
       )
     ),
 
-        Padding(
+    Padding(
       padding: EdgeInsets.symmetric(horizontal: 10),
-      child: Row(children:[
+      child: SizedBox(height: 40, child: Stack(children:[
         //Return
-        IconButton(
-          icon: Icon(Icons.keyboard_arrow_left),
-          onPressed: (){
-            baseplateKey.currentState?.update(
-              newWidget: deckSelectionWidget(decks)
-            );
-            clearData();
-          }
+        Positioned(
+          top:0,
+          left:0,
+          child: IconButton(
+            icon: Icon(Icons.keyboard_arrow_left),
+            onPressed: (){
+              baseplateKey.currentState?.update(
+                newWidget: deckSelectionWidget(decks)
+              );
+              clearData();
+            }
+          )
         ),
         //Save Deck
-        IconButton(
-          icon: Icon(Icons.save),
-          onPressed: (){
-            saveDeck(widget.deck);
-          },
-        )
+        Positioned(
+          top: 0,
+          left: 30,
+          child: IconButton(
+            icon: Icon(Icons.save),
+            onPressed: (){
+              saveDeck(widget.deck);
+            },
+          )
+        ),
+
+        //Zoom Out
+        Positioned(
+          top: 0,
+          right: 30,
+          child: IconButton(
+            icon: Icon(Icons.remove_circle),
+            onPressed: (){
+              setState((){
+                cardsAcross = (cardsAcross+1).clamp(minCardsAcross, maxCardsAcross);
+              });
+            },
+          )
+        ),
+
+        //Zoom in
+        Positioned(
+          top: 0,
+          right: 0,
+          child: IconButton(
+            icon: Icon(Icons.add_circle),
+            onPressed: (){
+              setState((){
+                cardsAcross = (cardsAcross-1).clamp(minCardsAcross, maxCardsAcross);
+              });
+            },
+          )
+        ),
+
+
       ])
+      )
     ),
     
     Expanded(child: ListView.builder(
@@ -387,6 +429,8 @@ void saveDeck(Deck deck){
 }
 
 List<String> getDeckIdentity(Deck deck){
+
+  List<String> orderedList = ["W", "U", "B", "R", "G", "C"];
   List<String> deckIdentity = [];
 
   for(MCard card in deck.deckList.keys){
@@ -401,5 +445,13 @@ List<String> getDeckIdentity(Deck deck){
     deckIdentity.add("C");
   }
 
-  return deckIdentity;
+  List<String> retList = [];
+
+  for(String color in orderedList){
+    if(deckIdentity.contains(color)){
+      retList.add(color);
+    }
+  }
+
+  return retList;
 }

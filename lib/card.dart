@@ -309,25 +309,26 @@ class _CardWidgetForDeckBuilderState extends State<CardWidgetForDeckBuilder>{
 
       //Card Count
       Positioned(
-        bottom: 0,
-        left: 38,
-        height: 20,
-        width: 20,
-        child: Container(
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.4),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              padding: EdgeInsets.zero,
-              child: Center(child: 
-              Text(
-                "${widget.cardQuantity}", 
-                style: TextStyle(
-                  color: Colors.white.withOpacity(1))
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Center(child:Container(
+            width: 20,
+            height: 20,
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                padding: EdgeInsets.zero,
+                child: Center(child: 
+                Text(
+                  "${widget.cardQuantity}", 
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(1))
+                    )
                   )
-                )
-              )
-      ),
+                ))
+        ),
 
       //Mouse region to test for hover
       Positioned(

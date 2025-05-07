@@ -230,9 +230,7 @@ class _CardSearchWidgetState extends State<CardSearchWidget> with AutomaticKeepA
                   icon: Icon(Icons.remove_circle),
                   onPressed: () {
                     setState(() {
-                      if(cardsPerRow + 1 <= maxCardsPerRow){
-                        cardsPerRow++;
-                      }
+                      cardsPerRow = (cardsPerRow + 1).clamp(minCardsPerRow, maxCardsPerRow);
                     });
                   }
                 ),
@@ -246,9 +244,7 @@ class _CardSearchWidgetState extends State<CardSearchWidget> with AutomaticKeepA
                 icon: Icon(Icons.add_circle),
                 onPressed: () {
                   setState(() {
-                    if(cardsPerRow - 1 >= minCardsPerRow){
-                      cardsPerRow--;
-                    }
+                    cardsPerRow = (cardsPerRow - 1).clamp(minCardsPerRow, maxCardsPerRow);
                   });
                 }
               ),
@@ -320,7 +316,7 @@ Map<String, bool> colorFilter = {
 };
 
 final int minCardsPerRow = 1;
-final int maxCardsPerRow = 5;
+final int maxCardsPerRow = 10;
 int cardsPerRow = 2;
 
 Widget buildSearchResults(Map<String, dynamic> cardData) {
